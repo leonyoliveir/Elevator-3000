@@ -1,0 +1,4 @@
+#define BRIDGE_DEVICE "GPIO_0"
+#define BRIDGE_ENABLE 11
+#define BRIDGE_PIN1 12
+#define BRIDGE_PIN2 13
