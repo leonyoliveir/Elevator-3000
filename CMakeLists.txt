@@ -7,7 +7,7 @@ list(APPEND HEADERS
     "${PROJECT_BINARY_DIR}/include/generated"
     "${PROJECT_BINARY_DIR}/zephyr/include/generated"
     "${PROJECT_SOURCE_DIR}/include"
-    )
+)
 
 list(APPEND SOURCES
     "${PROJECT_SOURCE_DIR}/src/main.c"

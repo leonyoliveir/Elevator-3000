@@ -38,6 +38,7 @@ int bridge_configure(l298n_t *bridge, u32_t pin1, u32_t pin2, u32_t enable_pin, 
     gpio_pin_write(bridge->device, bridge->enable_pin, bridge->enable);
     gpio_pin_write(bridge->device, bridge->pin_one, bridge->state_one);
     gpio_pin_write(bridge->device, bridge->pin_two, bridge->state_two);
+    printk("New H bridge configured succesfully in the device %s\n", bridge->dev_label);
     return 0;
 }
 
@@ -54,6 +55,7 @@ int bridge_enable(l298n_t *bridge)
     }
     bridge->enable = HIGH;
     gpio_pin_write(bridge->device, bridge->enable_pin, bridge->enable);
+    printk("Bridge enabled succesfully!\n");
     return 0;
 }
 
@@ -70,6 +72,8 @@ int bridge_set(l298n_t *bridge)
     }
     gpio_pin_write(bridge->device, bridge->pin_one, bridge->state_one);
     gpio_pin_write(bridge->device, bridge->pin_two, bridge->state_two);
+    printk("State one: %d\n", bridge->state_one);
+    printk("State two: %d\n", bridge->state_two);
     return 0;
 }
 
@@ -127,6 +131,9 @@ int new_bridge(l298n_t *bridge, char *dev_label, u32_t enable_pin, u32_t pin_one
     if(error) return error;
     printk("Setting the new H bridge...\n");
     error = bridge_configure(bridge, pin_one, pin_two, enable_pin, L298N_FLAGS);
+    if(error) return error;
+    printk("Enabling the new H bridge...\n");
+    error = bridge_enable(bridge);
     if(error) return error;
     printk("New H bridge initialized succesfully\n");
     return 0;
