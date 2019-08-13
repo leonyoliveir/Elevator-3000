@@ -27,7 +27,7 @@ typedef struct l298n l298n_t;
 int bridge_open(l298n_t *bridge, char *dev_label);
 
 /** 
- * Essa função tem como objetivo configurar o pino de saída
+ * Essa função tem como objetivo configurar os pinos da bridge
  * de acordo com suas flags.
  * @param bridge
  * @param pin1
@@ -87,7 +87,7 @@ int turn_right_motor(l298n_t *bridge);
 /** 
  * Essa função tem como objetivo verificar se o device do
  * motor foi inicilizado apropriadamente.
- * @param out
+ * @param bridge
  *
  * @return 
  */

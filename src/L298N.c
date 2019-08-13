@@ -8,10 +8,7 @@
 int bridge_open(l298n_t *bridge, char *dev_label)
 {
     bridge->device = device_get_binding(dev_label);
-    if(bridge_check_error(bridge))
-    {
-        return ERROR_CODE;
-    }
+    if(bridge_check_error(bridge)) return ERROR_CODE;
     bridge->dev_label = dev_label;
     bridge->enable_pin = (u32_t) NULL;
     bridge->pin_one = (u32_t) NULL;
@@ -25,10 +22,7 @@ int bridge_open(l298n_t *bridge, char *dev_label)
 
 int bridge_configure(l298n_t *bridge, u32_t pin1, u32_t pin2, u32_t enable_pin, int flags)
 {
-    if(bridge_check_error(bridge))
-    {
-        return ERROR_CODE;
-    }
+    if(bridge_check_error(bridge)) return ERROR_CODE;
     bridge->enable_pin = enable_pin;
     bridge->pin_one = pin1;
     bridge->pin_two = pin2;
@@ -44,10 +38,7 @@ int bridge_configure(l298n_t *bridge, u32_t pin1, u32_t pin2, u32_t enable_pin, 
 
 int bridge_enable(l298n_t *bridge)
 {
-    if(bridge_check_error(bridge))
-    {
-        return ERROR_CODE;
-    }
+    if(bridge_check_error(bridge)) return ERROR_CODE;
     else if(bridge->enable_pin == (u32_t) NULL)
     {
         printk("ERROR! First configure device\n");
@@ -61,10 +52,7 @@ int bridge_enable(l298n_t *bridge)
 
 int bridge_set(l298n_t *bridge)
 {
-    if(bridge_check_error(bridge))
-    {
-        return ERROR_CODE;
-    }
+    if(bridge_check_error(bridge)) return ERROR_CODE;
     else if(bridge->pin_one == (u32_t) NULL || bridge->pin_two == (u32_t) NULL)
     {
         printk("ERROR! First configure device\n");
@@ -79,10 +67,7 @@ int bridge_set(l298n_t *bridge)
 
 int stop_motor(l298n_t *bridge)
 {
-    if(bridge_check_error(bridge))
-    {
-        return ERROR_CODE;
-    }
+    if(bridge_check_error(bridge)) return ERROR_CODE;
     bridge->state_one = HIGH;
     bridge->state_two = HIGH;
     bridge_set(bridge);
@@ -91,10 +76,7 @@ int stop_motor(l298n_t *bridge)
 
 int turn_left_motor(l298n_t *bridge)
 {
-    if(bridge_check_error(bridge))
-    {
-        return ERROR_CODE;
-    }
+    if(bridge_check_error(bridge)) return ERROR_CODE;
     bridge->state_one = LOW;
     bridge->state_two = HIGH;
     bridge_set(bridge);
@@ -103,10 +85,7 @@ int turn_left_motor(l298n_t *bridge)
 
 int turn_right_motor(l298n_t *bridge)
 {
-    if(bridge_check_error(bridge))
-    {
-        return ERROR_CODE;
-    }
+    if(bridge_check_error(bridge)) return ERROR_CODE;
     bridge->state_one = HIGH;
     bridge->state_two = LOW;
     bridge_set(bridge);
