@@ -79,6 +79,6 @@ int new_ultrasonic(hcsr04_t *ultrasonic, char *dev_label, u32_t pin_trigger, u32
     printk("Setting the new Ultrasonic...\n");
     error = ultrasonic_configure(ultrasonic, pin_trigger, pin_echo, TRIG_FLAGS, ECHO_FLAGS);
     if(error) return error;
-    printk("New H bridge initialized succesfully\n");
+    printk("New Ultrasonic initialized succesfully\n");
     return 0;
 }
