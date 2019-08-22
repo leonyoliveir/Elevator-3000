@@ -35,7 +35,7 @@ u8_t check_calls_down(floor_t atual)
     floor_t level;
     for(level = GROUND; level <= atual; level++)
     {
-        if(check_inside(level) || (level > GROUND && check_outside_down(destination)) return 1;
+        if(check_inside(level) || (level > GROUND && check_outside_down(atual))) return 1;
     }
     return 0;
 }
@@ -164,11 +164,12 @@ u8_t timeout()
 
 void state_machine()
 {
-    static floor_t atual_level = check_level();
-    static floor_t next_level = atual_level;
+    static floor_t atual_level;
+    static floor_t next_level;
     static state_t atual = STOPPED;
     static state_t next = STOPPED;
     static state_t previous = STOPPED;
+    atual_level = check_level();
     switch(atual)
     {
         case STOPPED:
@@ -204,7 +205,7 @@ void state_machine()
                 calls_t source = ARRIVE;
                 update_calls(source, atual_level);
                 if(previous == GOING_UP && check_calls_up(atual_level)) next = GOING_UP;
-                else if(previus == GOING_DOWN && check_calls_down(atual_level)) next = GOING_DOWN;
+                else if(previous == GOING_DOWN && check_calls_down(atual_level)) next = GOING_DOWN;
                 else next = STOPPED;
             }
             else next = WAITING;

@@ -49,7 +49,7 @@ floor_t check_level()
 u8_t check_inside(floor_t destination)
 {
     k_sem_take(&elevator_in, K_FOREVER);
-    u8_t there_is_a_call = calls_inside[destination];
+    u8_t there_is_a_call = calls_in[destination];
     k_sem_give(&elevator_in);
     return there_is_a_call;
 }
