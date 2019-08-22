@@ -12,6 +12,10 @@ list(APPEND HEADERS
 list(APPEND SOURCES
     "${PROJECT_SOURCE_DIR}/src/main.c"
     "${PROJECT_SOURCE_DIR}/src/L298N.c"
+    "${PROJECT_SOURCE_DIR}/src/HCSR04.c"
+    "${PROJECT_SOURCE_DIR}/src/button.c"
+    "${PROJECT_SOURCE_DIR}/src/led.c"
+    "${PROJECT_SOURCE_DIR}/src/calls.c"
 )
 
 include_directories(${HEADERS})
