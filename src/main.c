@@ -121,12 +121,28 @@ void out_up_button_callback(struct device *dev, struct gpio_callback *cb, u32_t 
 void read_ultrasonic(void)
 {
     int distance = get_distance(&ultrasonic);
-    return;
+    floor_t floor;
+    if(distance < 30) floor = GROUND;
+    else if(distance < 60) floor = FIRST;
+    else if(distance < 90) floor = SECOND;
+    else floor = THIRD;
+    update_level(floor);
 }
 
-void control_motor(void)
+void control_motor(state_t atual)
 {
-    return;
+    switch(atual)
+    {
+        case GOING_UP:
+            turn_left_motor();
+            break;
+        case GOING_DOWN:
+            turn_right_motor();
+            break;
+        default:
+            stop_motor();
+            break;
+    }
 }
 
 // Threads
@@ -150,7 +166,7 @@ void buttonsThread(void)
 }
 void ledsThread(void)
 {
-
+    
     return;   
 }
 

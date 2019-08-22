@@ -15,7 +15,7 @@ void update_outside_up(floor_t destination, u8_t value);
 
 void update_outside_down(floor_t destination, u8_t value);
 
-u8_t check_level();
+floor_t check_level();
 
 u8_t check_inside(floor_t destination);
 
