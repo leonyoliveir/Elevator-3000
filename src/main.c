@@ -13,6 +13,9 @@ l298n_t h_bridge;
 hcsr04_t ultrasonic;
 button_t in_ground, in_first, in_second, in_third, out_ground, out_first_up, out_first_down, out_second_up, out_second_down, out_third;
 led_t led_up, led_down, led_door;
+floor_t floors;
+calls_t calls;
+state_t states;
 
 u8_t check_calls(floor_t destination)
 {
@@ -152,13 +155,12 @@ void ledsThread(void)
 }
 
 // Def Threads
-K_THREAD_DEFINE(check_b, STACKSIZE, buttonsThread, NULL, NULL, NULL,
-        PRIORITY - 1, 0, K_NO_WAIT);
-K_THREAD_DEFINE(check_l, STACKSIZE, ledsThread, NULL, NULL, NULL,
-        PRIORITY, 0, K_NO_WAIT);
+//K_THREAD_DEFINE(check_b, STACKSIZE, buttonsThread, NULL, NULL, NULL, PRIORITY - 1, 0, K_NO_WAIT);
+//K_THREAD_DEFINE(check_l, STACKSIZE, ledsThread, NULL, NULL, NULL, PRIORITY, 0, K_NO_WAIT);
 
 u8_t timeout()
 {
+    k_sleep(K_SECONDS(5));
     return 1;
 }
 
@@ -173,6 +175,7 @@ void state_machine()
     switch(atual)
     {
         case STOPPED:
+            printk("Elevator stopped at %d floor...\n", atual_level);
             if(check_calls(atual_level)) next = WAITING;
             else if(check_calls_up(atual_level))
             {
@@ -186,26 +189,45 @@ void state_machine()
             }
             else next = STOPPED;
         case GOING_UP:
+            printk("Elevator rising up from %d floor to %d floor...\n", atual_level, next_level);
             if(atual_level == next_level && check_calls(atual_level))
             {
                 next = WAITING;
                 previous = GOING_UP;
             }
-            else next = GOING_UP;
+            else 
+            {
+                next = GOING_UP;
+                next_level = atual_level + 1;
+            }
         case GOING_DOWN:
+            printk("Elevator falling down from %d floor to %d floor...\n", atual_level, next_level);
             if(atual_level == next_level && check_calls(atual_level))
             {
                 next = WAITING;
                 previous = GOING_DOWN;  
             }
-            else next = GOING_DOWN;
+            else
+            {
+                next = GOING_DOWN;
+                next_level = atual_level - 1;
+            } 
         case WAITING:
+            printk("Elevator waiting for timeout..."\n);
             if(timeout())
             {
                 calls_t source = ARRIVE;
                 update_calls(source, atual_level);
-                if(previous == GOING_UP && check_calls_up(atual_level)) next = GOING_UP;
-                else if(previous == GOING_DOWN && check_calls_down(atual_level)) next = GOING_DOWN;
+                if(previous == GOING_UP && check_calls_up(atual_level))
+                {
+                    next = GOING_UP;
+                    next_level = next_level + 1;
+                } 
+                else if(previous == GOING_DOWN && check_calls_down(atual_level))
+                {
+                    next = GOING_DOWN;
+                    next_level = next_level + 1;
+                } 
                 else next = STOPPED;
             }
             else next = WAITING;
@@ -235,9 +257,35 @@ void initializing(void)
     new_led(&led_door, DEVICE, LED_DOOR);
 }
 
+void test(void)
+{
+    floors = GROUND;
+    update_level(floors);
+    k_sleep(K_SECONDS(3));
+    calls = OUT_DOWN;
+    floors = SECOND;
+    update_calls(calls, floors);
+    k_sleep(K_SECONDS(5));
+    floors = FIRST;
+    update_level(floors);
+    k_sleep(K_SECONDS(3));
+    floors = SECOND;
+    update_level(floors);
+    floors = FIRST;
+    calls = INSIDE;
+    update_calls(calls, floors);
+    k_sleep(K_SECONDS(4));
+    update_level(floors);
+}
+
+K_THREAD_DEFINE(test, STACKSIZE, test, NULL, NULL, NULL, PRIORITY, 0, K_NO_WAIT);
 // Main
 int main(void)
 {
     initializing();
+    while(1)
+    {
+        state_machine();
+    }
     return 0;
 }

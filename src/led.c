@@ -48,17 +48,6 @@ int led_set(led_t *out, u8_t value)
     return 0;
 }
 
-int led_digital_invert(led_t *out)
-{
-    if(led_check_error(out))
-    {
-        return ERROR_CODE;
-    }
-    u8_t inverted = ~out->state & 1;
-    led_set(out, inverted);
-    return 0;
-}
-
 int led_check_error(led_t *out)
 {
     if(!out->device)

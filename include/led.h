@@ -44,15 +44,6 @@ int led_configure(led_t *out, u32_t pin, int flags);
 int led_set(led_t *out, u8_t value);
 
 /** 
- * Essa função tem como objetivo inverter o estado do pino
- * de saída, de forma digital (0 para 1 e 1 para 0).
- * @param out 
- *
- * @return inverted
- */
-int led_digital_invert(led_t *out);
-
-/** 
  * Essa função tem como objetivo verificar se o device de
  * saída foi inicilizado apropriadamente.
  * @param out
