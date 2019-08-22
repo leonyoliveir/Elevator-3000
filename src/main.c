@@ -8,18 +8,23 @@
 
 l298n_t h_bridge;
 hcsr04_t ultrasonic;
+button_t in_ground, in_first, in_second, in_third, out_ground, out_first_up, out_first_down, out_second_up, out_second_down, out_third;
+led_t led_up, led_down, led_door;
 
 typedef enum {STOPPED, WAITING, GOING_UP, GOING_DOWN} state_t;
 typedef enum {INSIDE, OUT_UP, OUT_DOWN, ARRIVE} calls_t;
 typedef enum {GROUND, FIRST, SECOND, THIRD} floor_t;
 
+// Def Semaf
 K_SEM_DEFINE(elevator_in, 0, 1);
 K_SEM_DEFINE(elevator_out_up, 0, 1);
 K_SEM_DEFINE(elevator_out_down, 0, 1);
 
+
 void update_level(floor_t level)
 {
-    static u8_t atual_level = level;
+    static u8_t atual_level = 0;
+    atual_level = level;
 }
 
 void update_inside(floor_t destination, u8_t value)
@@ -44,6 +49,58 @@ void update_outside_down(floor_t destination, u8_t value)
     k_sem_take(elevator_out_down, K_FOREVER);
     calls_down_out[destination - 1] = value;
     k_sem_give(elevator_in);
+}
+
+void in_button_callback(struct device *dev, struct gpio_callback *cb, u32_t pin)
+{
+    if(pin & 1 << IN_GROUND_F)
+    {
+        update_calls(INSIDE, GROUND);
+    }
+    if(pin & 1 << IN_FIRST_F)
+    {
+        update_calls(INSIDE, FIRST);
+    }
+    if(pin & 1 << IN_SECOND_F)
+    {
+        update_calls(INSIDE, SECOND);
+    }
+    if(pin & 1 << IN_THIRD_F)
+    {
+        update_calls(INSIDE, THIRD);
+    }
+}
+
+void out_down_button_callback(struct device *dev, struct gpio_callback *cb, u32_t pin)
+{
+    if(pin & 1 << OUT_FIRST_DOWN)
+    {
+        update_calls(OUT_DOWN, FIRST);
+    }
+    if(pin & 1 << OUT_SECOND_DOWN)
+    {
+        update_calls(OUT_DOWN, SECOND);
+    }
+    if(pin & 1 << OUT_THIRD)
+    {
+        update_calls(OUT_DOWN, THIRD);
+    }
+}
+
+void out_up_button_callback(struct device *dev, struct gpio_callback *cb, u32_t pin)
+{
+    if(pin & 1 << OUT_GROUND)
+    {
+        update_calls(OUT_GROUND);
+    }
+    if(pin & 1 << OUT_FIRST_DOWN)
+    {
+        update_calls(OUT_UP, FIRST);
+    }
+    if(pin & 1 << OUT_SECOND_DOWN)
+    {
+        update_calls(OUT_UP, SECOND);
+    }
 }
 
 void update_calls(calls_t source, floor_t destination)
@@ -80,9 +137,49 @@ void control_motor(void)
     return;
 }
 
+// Threads
+void buttonsThread(void)
+{   
+    while(1)
+    {
+        u32_t value = 0U;
+
+        input_read(&button1, &value);
+        input_read(&button2, &value);
+        input_read(&button3, &value);
+        input_read(&button4, &value);
+        k_sleep(SLEEP_TIME);
+    }
+}
+void ledsThread(void)
+{
+    return;   
+}
+
+// Def Threads
+K_THREAD_DEFINE(check_b, STACKSIZE, buttonsThread, NULL, NULL, NULL,
+        PRIORITY - 1, 0, K_NO_WAIT);
+K_THREAD_DEFINE(check_l, STACKSIZE, ledsThread, NULL, NULL, NULL,
+        PRIORITY, 0, K_NO_WAIT);
+
+
+// Main
 int main(void)
 {
     new_bridge(&h_bridge, DEVICE, BRIDGE_ENABLE, BRIDGE_PIN1, BRIDGE_PIN2);
     new_ultrasonic(&ultrasonic, DEVICE, US_TRIG_PIN, US_ECHO_PIN);
+    new_button(&in_ground, DEVICE, IN_GROUND_F, in_button_callback);
+    new_button(&in_first, DEVICE, IN_FIRST_F, in_button_callback);
+    new_button(&in_second, DEVICE, IN_SECOND_F, in_button_callback);
+    new_button(&in_third, DEVICE, IN_THIRD_F, in_button_callback);
+    new_button(&out_ground, DEVICE, OUT_GROUND, out_up_button_callback);
+    new_button(&out_first_up, DEVICE, OUT_FIRST_UP, out_up_button_callback);
+    new_button(&out_first_down, DEVICE, OUT_FIRST_DOWN, out_down_button_callback);
+    new_button(&out_second_up, DEVICE, OUT_SECOND_UP, out_up_button_callback);
+    new_button(&out_second_down, DEVICE, OUT_SECOND_DOWN, out_down_button_callback);
+    new_button(&out_third, DEVICE, OUT_THIRD, out_down_button_callback);
+    new_led(&led_up, DEVICE, LED_UP);
+    new_led(&led_down, DEVICE, LED_DOWN);
+    new_led(&led_door, DEVICE, LED_DOOR);
     return 0;
 }
