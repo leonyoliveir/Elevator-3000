@@ -135,14 +135,19 @@ void read_ultrasonic(void)
 {
     while(1)
     {
+        printk("Chama na threadzinha\n");
         int distance = get_distance(&ultrasonic);
+        printk("Achei a distancia!\n");
         floor_t floor;
         if(distance < 30) floor = GROUND;
         else if(distance < 60) floor = FIRST;
         else if(distance < 90) floor = SECOND;
         else floor = THIRD;
         update_level(floor);
+        printk("Sai da secao critica!\n");
         printk("%d\n", distance);
+        //k_sleep(SLEEP_TIME);
+        printk("Acordei!\n");
     }
 }
 
@@ -348,10 +353,10 @@ int main(void)
     initializing_elevator_sensors();
     initializing_outside_buttons();
     initializing_inside_buttons();
-    while(1)
-    {
+    //while(1)
+    //{
         state_machine();
         k_sleep(K_SECONDS(1));
-    }
+    //}
     return 0;
 }

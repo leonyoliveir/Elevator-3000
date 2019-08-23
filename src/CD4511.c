@@ -41,7 +41,7 @@ int decoder_set(cd4511_t *decoder, u8_t floor)
     decoder->state_digit_two = (floor >> 1) & 1;
     gpio_pin_write(decoder->device, decoder->digit_one, decoder->state_digit_one);
     gpio_pin_write(decoder->device, decoder->digit_two, decoder->state_digit_two);
-    printk("Decoder value changed to %d", floor);
+    printk("Decoder value changed to %d\n", floor);
 }
 
 int decoder_check_error(cd4511_t *decoder)
