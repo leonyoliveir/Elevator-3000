@@ -72,34 +72,42 @@ void in_button_callback(struct device *dev, struct gpio_callback *cb, u32_t pin)
 {
     if(pin & 1 << IN_GROUND_F)
     {
+        printk("Ground floor called from inside\n");
         update_calls(INSIDE, GROUND);
     }
     if(pin & 1 << IN_FIRST_F)
     {
+        printk("First floor called from inside\n");
         update_calls(INSIDE, FIRST);
     }
     if(pin & 1 << IN_SECOND_F)
     {
+        printk("Second floor called from inside\n");
         update_calls(INSIDE, SECOND);
     }
     if(pin & 1 << IN_THIRD_F)
     {
+        printk("Third floor called from inside\n");
         update_calls(INSIDE, THIRD);
     }
 }
 
 void out_down_button_callback(struct device *dev, struct gpio_callback *cb, u32_t pin)
-{
+{   
+
     if(pin & 1 << OUT_FIRST_DOWN)
     {
+        printk("First floor called from outside down\n");
         update_calls(OUT_DOWN, FIRST);
     }
     if(pin & 1 << OUT_SECOND_DOWN)
     {
+        printk("Second floor called from outside down\n");
         update_calls(OUT_DOWN, SECOND);
     }
     if(pin & 1 << OUT_THIRD)
     {
+        printk("Third floor called from outside down\n");
         update_calls(OUT_DOWN, THIRD);
     }
 }
@@ -108,71 +116,97 @@ void out_up_button_callback(struct device *dev, struct gpio_callback *cb, u32_t 
 {
     if(pin & 1 << OUT_GROUND)
     {
+        printk("Ground floor called from outside up\n");
         update_calls(OUT_UP, GROUND);
     }
-    if(pin & 1 << OUT_FIRST_DOWN)
+    if(pin & 1 << OUT_FIRST_UP)
     {
+        printk("First floor called from outside up\n");
         update_calls(OUT_UP, FIRST);
     }
-    if(pin & 1 << OUT_SECOND_DOWN)
+    if(pin & 1 << OUT_SECOND_UP)
     {
+        printk("Second floor called from outside up\n");
         update_calls(OUT_UP, SECOND);
     }
 }
 
 void read_ultrasonic(void)
 {
-    int distance = get_distance(&ultrasonic);
-    floor_t floor;
-    if(distance < 30) floor = GROUND;
-    else if(distance < 60) floor = FIRST;
-    else if(distance < 90) floor = SECOND;
-    else floor = THIRD;
-    update_level(floor);
+    while(1)
+    {
+        int distance = get_distance(&ultrasonic);
+        floor_t floor;
+        if(distance < 30) floor = GROUND;
+        else if(distance < 60) floor = FIRST;
+        else if(distance < 90) floor = SECOND;
+        else floor = THIRD;
+        update_level(floor);
+        printk("%d\n", distance);
+    }
 }
 
-void control_outputs(state_t atual)
+K_THREAD_DEFINE(read, STACKSIZE, read_ultrasonic, NULL, NULL, NULL, PRIORITY, 0, K_NO_WAIT);
+
+void control_outputs(state_t atual, floor_t atual_level)
 {
+    decoder_set(&decoder, atual_level);
     switch(atual)
     {
         case GOING_UP:
             turn_left_motor(&h_bridge);
-            //light_leds_up();
+            led_set(&led_up, 0);
+            led_set(&led_down, 1);
+            led_set(&led_door, 1);
             break;
         case GOING_DOWN:
             turn_right_motor(&h_bridge);
-            //light_leds_down();
+            led_set(&led_up, 1);
+            led_set(&led_down, 0);
+            led_set(&led_door, 1);
             break;
         case WAITING:
-            //light_led_door();
+            led_set(&led_up, 1);
+            led_set(&led_down, 1);
+            led_set(&led_door, 0);
         default:
             stop_motor(&h_bridge);
             break;
     }
 }
 
-// Threads
-void buttonsThread(void)
-{   
-    while(1)
-    {
-        u32_t value = 0U;
-        button_read(&in_ground, &value);
-        button_read(&in_first, &value);
-        button_read(&in_second, &value);
-        button_read(&in_third, &value);
-        button_read(&out_ground, &value);
-        button_read(&out_first_up, &value);
-        button_read(&out_first_down, &value);
-        button_read(&out_second_up, &value);
-        button_read(&out_second_down, &value);
-        button_read(&out_third, &value);
-        k_sleep(SLEEP_TIME);
-    }
-}
+// // Threads
+// void buttonsThread(void)
+// {   
+//     while(1)
+//     {
+//         u32_t value = 0U;
+//         button_read(&out_ground, &value);
+//         button_read(&out_first_up, &value);
+//         button_read(&out_first_down, &value);
+//         button_read(&out_second_up, &value);
+//         button_read(&out_second_down, &value);
+//         button_read(&out_third, &value);
+//         k_sleep(SLEEP_TIME);
+//     }
+// }
 
-// Def Threads
-//K_THREAD_DEFINE(check_b, STACKSIZE, buttonsThread, NULL, NULL, NULL, PRIORITY - 1, 0, K_NO_WAIT);
+// void buttonsInsideThread(void)
+// {
+//     while(1)
+//     {
+//         u32_t value = 0U;
+//         button_read(&in_ground, &value);
+//         button_read(&in_first, &value);
+//         button_read(&in_second, &value);
+//         button_read(&in_third, &value);
+//         k_sleep(SLEEP_TIME);
+//     }
+// }
+
+// // Def Threads
+// K_THREAD_DEFINE(check_b, STACKSIZE, buttonsThread, NULL, NULL, NULL, PRIORITY, 0, K_NO_WAIT);
+// K_THREAD_DEFINE(check_bi, STACKSIZE, buttonsInsideThread, NULL, NULL, NULL, PRIORITY-1, 0, K_NO_WAIT);
 //K_THREAD_DEFINE(check_l, STACKSIZE, ledsThread, NULL, NULL, NULL, PRIORITY, 0, K_NO_WAIT);
 
 u8_t timeout()
@@ -194,7 +228,7 @@ void state_machine()
     switch(atual)
     {
         case STOPPED:
-            printk("Elevator stopped at %d floor...\n", atual_level);
+            //printk("Elevator stopped at %d floor...\n", atual_level);
             if(check_calls(atual_level)) next = WAITING;
             else if(check_calls_up(atual_level))
             {
@@ -210,7 +244,7 @@ void state_machine()
             else next = STOPPED;
             break;
         case GOING_UP:
-            printk("Elevator rising up from %d floor to %d floor...\n", atual_level, next_level);
+            //printk("Elevator rising up from %d floor to %d floor...\n", atual_level, next_level);
             if(atual_level == next_level && check_calls(atual_level))
             {
                 next = WAITING;
@@ -223,7 +257,7 @@ void state_machine()
             }
             break;
         case GOING_DOWN:
-            printk("Elevator falling down from %d floor to %d floor...\n", atual_level, next_level);
+            //printk("Elevator falling down from %d floor to %d floor...\n", atual_level, next_level);
             if(atual_level == next_level && check_calls(atual_level))
             {
                 next = WAITING;
@@ -236,7 +270,7 @@ void state_machine()
             } 
             break;
         case WAITING:
-            printk("Elevator waiting for timeout...\n");
+            //printk("Elevator waiting for timeout...\n");
             if(timeout())
             {
                 calls_t source = ARRIVE;
@@ -260,56 +294,60 @@ void state_machine()
             break;
     }
     atual = next;
+    control_outputs(atual, atual_level);
 }
 
-void initializing(void)
+void initializing_elevator_sensors(void)
 {
     new_bridge(&h_bridge, DEVICE, BRIDGE_ENABLE, BRIDGE_PIN1, BRIDGE_PIN2);
     new_ultrasonic(&ultrasonic, DEVICE, US_TRIG_PIN, US_ECHO_PIN);
     new_decoder(&decoder, DEVICE, DECODER_PIN1, DECODER_PIN2);
+    new_led(&led_up, DEVICE, LED_UP);
+    new_led(&led_down, DEVICE, LED_DOWN);
+    new_led(&led_door, DEVICE, LED_DOOR);
+}
+
+void initializing_inside_buttons(void)
+{
     new_button(&in_ground, DEVICE, IN_GROUND_F, in_button_callback);
-    new_button(&in_first, DEVICE, IN_FIRST_F, in_button_callback);
-    new_button(&in_second, DEVICE, IN_SECOND_F, in_button_callback);
+    
+    
     new_button(&in_third, DEVICE, IN_THIRD_F, in_button_callback);
+}
+
+void initializing_outside_buttons(void)
+{
     new_button(&out_ground, DEVICE, OUT_GROUND, out_up_button_callback);
     new_button(&out_first_up, DEVICE, OUT_FIRST_UP, out_up_button_callback);
     new_button(&out_first_down, DEVICE, OUT_FIRST_DOWN, out_down_button_callback);
     new_button(&out_second_up, DEVICE, OUT_SECOND_UP, out_up_button_callback);
     new_button(&out_second_down, DEVICE, OUT_SECOND_DOWN, out_down_button_callback);
     new_button(&out_third, DEVICE, OUT_THIRD, out_down_button_callback);
-    new_led(&led_up, DEVICE, LED_UP);
-    new_led(&led_down, DEVICE, LED_DOWN);
-    new_led(&led_door, DEVICE, LED_DOOR);
+    new_button(&in_first, DEVICE, IN_FIRST_F, in_button_callback);
+    new_button(&in_second, DEVICE, IN_SECOND_F, in_button_callback);
+    new_button(&in_third, DEVICE, IN_THIRD_F, in_button_callback);
 }
 
 void test(void)
 {
-    printk("Testing...\n");
-    floors = GROUND;
-    update_level(floors);
-    k_sleep(K_SECONDS(3));
-    calls = OUT_DOWN;
-    floors = SECOND;
-    update_calls(calls, floors);
-    printk("Calling...\n");
-    k_sleep(K_SECONDS(5));
-    floors = FIRST;
-    update_level(floors);
-    k_sleep(K_SECONDS(3));
-    floors = SECOND;
-    update_level(floors);
-    floors = FIRST;
-    calls = INSIDE;
-    update_calls(calls, floors);
-    k_sleep(K_SECONDS(4));
-    update_level(floors);
+    stop_motor(&h_bridge);
+    k_sleep(500);
+    turn_left_motor(&h_bridge);
+    k_sleep(500);
+    stop_motor(&h_bridge);
+    k_sleep(500);
+    turn_right_motor(&h_bridge);
+    k_sleep(500);
+    stop_motor(&h_bridge);
 }
 
-K_THREAD_DEFINE(lungalunga, STACKSIZE, test, NULL, NULL, NULL, PRIORITY, 0, K_NO_WAIT);
+K_THREAD_DEFINE(lungalunga, STACKSIZE, read_ultrasonic, NULL, NULL, NULL, PRIORITY, 0, K_NO_WAIT);
 // Main
 int main(void)
 {
-    initializing();
+    initializing_elevator_sensors();
+    initializing_outside_buttons();
+    initializing_inside_buttons();
     while(1)
     {
         state_machine();

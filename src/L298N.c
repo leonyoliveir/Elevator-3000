@@ -74,7 +74,7 @@ int stop_motor(l298n_t *bridge)
     return 0;
 }
 
-int turn_left_motor(l298n_t *bridge)
+int turn_left_motor(l298n_t *bridge) // DESCIDA DO MOTOR
 {
     if(bridge_check_error(bridge)) return ERROR_CODE;
     bridge->state_one = LOW;
@@ -83,7 +83,7 @@ int turn_left_motor(l298n_t *bridge)
     return 0;
 }
 
-int turn_right_motor(l298n_t *bridge)
+int turn_right_motor(l298n_t *bridge) // SUBIDA DO MOTOR
 {
     if(bridge_check_error(bridge)) return ERROR_CODE;
     bridge->state_one = HIGH;
