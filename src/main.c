@@ -8,9 +8,11 @@
 #include "button.h"
 #include "led.h"
 #include "calls.h"
+#include "CD4511.h"
 
 l298n_t h_bridge;
 hcsr04_t ultrasonic;
+cd_4511_t decoder;
 button_t in_ground, in_first, in_second, in_third, out_ground, out_first_up, out_first_down, out_second_up, out_second_down, out_third;
 led_t led_up, led_down, led_door;
 floor_t floors;
@@ -129,16 +131,20 @@ void read_ultrasonic(void)
     update_level(floor);
 }
 
-void control_motor(state_t atual)
+void control_outputs(state_t atual)
 {
     switch(atual)
     {
         case GOING_UP:
             turn_left_motor();
+            light_leds_up();
             break;
         case GOING_DOWN:
             turn_right_motor();
+            light_leds_down();
             break;
+        case WAITING:
+            light_led_door();
         default:
             stop_motor();
             break;
@@ -163,11 +169,6 @@ void buttonsThread(void)
         button_read(&out_third, &value);
         k_sleep(SLEEP_TIME);
     }
-}
-void ledsThread(void)
-{
-    
-    return;   
 }
 
 // Def Threads
@@ -258,6 +259,7 @@ void initializing(void)
 {
     new_bridge(&h_bridge, DEVICE, BRIDGE_ENABLE, BRIDGE_PIN1, BRIDGE_PIN2);
     new_ultrasonic(&ultrasonic, DEVICE, US_TRIG_PIN, US_ECHO_PIN);
+    new_decoder(&decoder, DEVICE, DECODER_PIN1, DECODER_PIN2)
     new_button(&in_ground, DEVICE, IN_GROUND_F, in_button_callback);
     new_button(&in_first, DEVICE, IN_FIRST_F, in_button_callback);
     new_button(&in_second, DEVICE, IN_SECOND_F, in_button_callback);

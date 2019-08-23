@@ -16,14 +16,14 @@ typedef struct led led_t;
 /** 
  * Essa função tem como objetivo iniciar o driver led,
  * ou seja, iniciar o device. 
- * @param out 
+ * @param led
  *
  * @return 
  */
 int led_open(led_t *out, char *dev_label);
 
 /** 
- * Essa função tem como objetivo configurar o pino de saída
+ * Essa função tem como objetivo configurar o pino do led
  * de acordo com suas flags.
  * @param out 
  * @param pin 
@@ -45,7 +45,7 @@ int led_set(led_t *out, u8_t value);
 
 /** 
  * Essa função tem como objetivo verificar se o device de
- * saída foi inicilizado apropriadamente.
+ * saída foi inicializado apropriadamente.
  * @param out
  *
  * @return 

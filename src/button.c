@@ -13,20 +13,14 @@ int button_open(button_t *in, char *dev_label)
     in->device = device_get_binding(dev_label);
     in->dev_label = dev_label;
     in->pin = (u32_t) NULL;
-    if(button_check_error(in))
-    {
-        return ERROR_CODE;
-    }
+    if(button_check_error(in)) return ERROR_CODE;
     printk("New button initialized succesfully in the device %s\n", dev_label);
     return 0;
 }
 
 int button_configure(button_t *in, u32_t pin, int flags, gpio_callback_handler_t cb)
 {
-    if(button_check_error(in))
-    {
-        return ERROR_CODE;
-    }
+    if(button_check_error(in)) return ERROR_CODE;
     in->pin = pin;
     gpio_pin_configure(in->device, pin, flags);
     gpio_init_callback(&in->gpio_callback, cb, BIT(pin));
@@ -38,10 +32,7 @@ int button_configure(button_t *in, u32_t pin, int flags, gpio_callback_handler_t
 
 int button_read(button_t *in, u32_t *state)
 {
-    if(button_check_error(in))
-    {
-        return ERROR_CODE;
-    }
+    if(button_check_error(in)) return ERROR_CODE;
     else if(in->pin == (u32_t) NULL)
     {
         printk("ERROR! First, configure device\n");

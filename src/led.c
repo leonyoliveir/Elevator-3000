@@ -10,20 +10,14 @@ int led_open(led_t *out, char *dev_label)
     out->dev_label = dev_label;
     out->state = 1;
     out->pin = (u32_t) NULL;
-    if(led_check_error(out))
-    {
-        return ERROR_CODE;
-    }
+    if(led_check_error(out)) return ERROR_CODE;
     printk("New led initialized succesfully in the device %s\n", dev_label);
     return 0;
 }
 
 int led_configure(led_t *out, u32_t pin, int flags)
 {
-    if(led_check_error(out))
-    {
-        return ERROR_CODE;
-    }
+    if(led_check_error(out)) return ERROR_CODE;
     out->pin = pin;
     gpio_pin_configure(out->device, pin, flags);
     gpio_pin_write(out->device, pin, out->state);
@@ -33,10 +27,7 @@ int led_configure(led_t *out, u32_t pin, int flags)
 
 int led_set(led_t *out, u8_t value)
 {
-    if(led_check_error(out))
-    {
-        return ERROR_CODE;
-    }
+    if(led_check_error(out)) return ERROR_CODE;
     else if(out->pin == (u32_t) NULL)
     {
         printk("ERROR! First configure device\n");
