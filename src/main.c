@@ -12,7 +12,7 @@
 
 l298n_t h_bridge;
 hcsr04_t ultrasonic;
-cd_4511_t decoder;
+cd4511_t decoder;
 button_t in_ground, in_first, in_second, in_third, out_ground, out_first_up, out_first_down, out_second_up, out_second_down, out_third;
 led_t led_up, led_down, led_door;
 floor_t floors;
@@ -136,17 +136,17 @@ void control_outputs(state_t atual)
     switch(atual)
     {
         case GOING_UP:
-            turn_left_motor();
-            light_leds_up();
+            turn_left_motor(&h_bridge);
+            //light_leds_up();
             break;
         case GOING_DOWN:
-            turn_right_motor();
-            light_leds_down();
+            turn_right_motor(&h_bridge);
+            //light_leds_down();
             break;
         case WAITING:
-            light_led_door();
+            //light_led_door();
         default:
-            stop_motor();
+            stop_motor(&h_bridge);
             break;
     }
 }
@@ -183,11 +183,13 @@ u8_t timeout()
 
 void state_machine()
 {
+    //printk("To na state machine\n");
     static floor_t atual_level;
     static floor_t next_level;
     static state_t atual = STOPPED;
     static state_t next = STOPPED;
     static state_t previous = STOPPED;
+    //printk("Variaveis\n");
     atual_level = check_level();
     switch(atual)
     {
@@ -196,6 +198,7 @@ void state_machine()
             if(check_calls(atual_level)) next = WAITING;
             else if(check_calls_up(atual_level))
             {
+                printk("Call received up...\n");
                 next = GOING_UP;
                 next_level = atual_level + 1;
             } 
@@ -205,6 +208,7 @@ void state_machine()
                 next_level = atual_level - 1;
             }
             else next = STOPPED;
+            break;
         case GOING_UP:
             printk("Elevator rising up from %d floor to %d floor...\n", atual_level, next_level);
             if(atual_level == next_level && check_calls(atual_level))
@@ -217,6 +221,7 @@ void state_machine()
                 next = GOING_UP;
                 next_level = atual_level + 1;
             }
+            break;
         case GOING_DOWN:
             printk("Elevator falling down from %d floor to %d floor...\n", atual_level, next_level);
             if(atual_level == next_level && check_calls(atual_level))
@@ -229,8 +234,9 @@ void state_machine()
                 next = GOING_DOWN;
                 next_level = atual_level - 1;
             } 
+            break;
         case WAITING:
-            printk("Elevator waiting for timeout..."\n);
+            printk("Elevator waiting for timeout...\n");
             if(timeout())
             {
                 calls_t source = ARRIVE;
@@ -248,6 +254,7 @@ void state_machine()
                 else next = STOPPED;
             }
             else next = WAITING;
+            break;
         default:
             next = STOPPED;
             break;
@@ -259,7 +266,7 @@ void initializing(void)
 {
     new_bridge(&h_bridge, DEVICE, BRIDGE_ENABLE, BRIDGE_PIN1, BRIDGE_PIN2);
     new_ultrasonic(&ultrasonic, DEVICE, US_TRIG_PIN, US_ECHO_PIN);
-    new_decoder(&decoder, DEVICE, DECODER_PIN1, DECODER_PIN2)
+    new_decoder(&decoder, DEVICE, DECODER_PIN1, DECODER_PIN2);
     new_button(&in_ground, DEVICE, IN_GROUND_F, in_button_callback);
     new_button(&in_first, DEVICE, IN_FIRST_F, in_button_callback);
     new_button(&in_second, DEVICE, IN_SECOND_F, in_button_callback);
@@ -277,12 +284,14 @@ void initializing(void)
 
 void test(void)
 {
+    printk("Testing...\n");
     floors = GROUND;
     update_level(floors);
     k_sleep(K_SECONDS(3));
     calls = OUT_DOWN;
     floors = SECOND;
     update_calls(calls, floors);
+    printk("Calling...\n");
     k_sleep(K_SECONDS(5));
     floors = FIRST;
     update_level(floors);
@@ -296,7 +305,7 @@ void test(void)
     update_level(floors);
 }
 
-K_THREAD_DEFINE(test, STACKSIZE, test, NULL, NULL, NULL, PRIORITY, 0, K_NO_WAIT);
+K_THREAD_DEFINE(lungalunga, STACKSIZE, test, NULL, NULL, NULL, PRIORITY, 0, K_NO_WAIT);
 // Main
 int main(void)
 {
@@ -304,6 +313,7 @@ int main(void)
     while(1)
     {
         state_machine();
+        k_sleep(K_SECONDS(1));
     }
     return 0;
 }

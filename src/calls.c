@@ -5,10 +5,10 @@ static u8_t calls_up_out[3] = {0, 0, 0};
 static u8_t calls_down_out[3] = {0, 0, 0};
 static floor_t atual_level = GROUND;
 
-K_SEM_DEFINE(elevator_in, 0, 1);
-K_SEM_DEFINE(elevator_out_up, 0, 1);
-K_SEM_DEFINE(elevator_out_down, 0, 1);
-K_SEM_DEFINE(elevator_level, 0, 1);
+K_SEM_DEFINE(elevator_in, 1, 1);
+K_SEM_DEFINE(elevator_out_up, 1, 1);
+K_SEM_DEFINE(elevator_out_down, 1, 1);
+K_SEM_DEFINE(elevator_level, 1, 1);
 
 void update_level(floor_t level)
 {
@@ -40,6 +40,7 @@ void update_outside_down(floor_t destination, u8_t value)
 
 floor_t check_level()
 {
+    //printk("Checando andar...\n");
     k_sem_take(&elevator_level, K_FOREVER);
     floor_t return_level = atual_level;
     k_sem_give(&elevator_level);
