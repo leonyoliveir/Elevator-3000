@@ -13,7 +13,7 @@
 l298n_t h_bridge;
 hcsr04_t ultrasonic;
 cd4511_t decoder;
-button_t in_ground, in_first, in_second, in_third, out_ground, out_first_up, out_first_down, out_second_up, out_second_down, out_third;
+button_t in_ground, in_first, in_second, in_third, out_ground, out_first, out_second, out_third;
 led_t led_up, led_down, led_door;
 floor_t floors;
 calls_t calls;
@@ -21,7 +21,7 @@ state_t states;
 
 u8_t check_calls(floor_t destination)
 {
-    if(check_inside(destination) || (destination > GROUND && check_outside_down(destination)) || (destination < THIRD && check_outside_up(destination))) return 1;
+    if(check_inside(destination) || check_outside(destination)) return 1;
     return 0;
 }
 
@@ -30,7 +30,7 @@ u8_t check_calls_up(floor_t atual)
     floor_t level;
     for(level = atual; level <= THIRD; level++)
     {
-        if(check_inside(level) || (level < THIRD && check_outside_up(level))) return 1;
+        if(check_inside(level) ||  check_outside(level)) return 1;
     }
     return 0;
 }
@@ -40,7 +40,7 @@ u8_t check_calls_down(floor_t atual)
     floor_t level;
     for(level = GROUND; level <= atual; level++)
     {
-        if(check_inside(level) || (level > GROUND && check_outside_down(atual))) return 1;
+        if(check_inside(level) || check_outside(level)) return 1;
     }
     return 0;
 }
@@ -52,16 +52,12 @@ void update_calls(calls_t source, floor_t destination)
         case INSIDE:
             update_inside(destination, 1);
             break;
-        case OUT_UP:
-            update_outside_up(destination, 1);
-            break;
-        case OUT_DOWN:
-            update_outside_down(destination, 1);
+        case OUTSIDE:
+            update_outside(destination, 1);
             break;
         case ARRIVE:
             update_inside(destination, 0);
-            update_outside_up(destination, 0);
-            update_outside_down(destination, 0);
+            update_outside(destination, 0);
             break;
         default:
             break;
@@ -70,77 +66,62 @@ void update_calls(calls_t source, floor_t destination)
 
 void in_button_callback(struct device *dev, struct gpio_callback *cb, u32_t pin)
 {
-    if(pin & 1 << IN_GROUND_F)
+    if(pin & 1 << IN_GROUND)
     {
         printk("Ground floor called from inside\n");
         update_calls(INSIDE, GROUND);
     }
-    if(pin & 1 << IN_FIRST_F)
+    if(pin & 1 << IN_FIRST)
     {
         printk("First floor called from inside\n");
         update_calls(INSIDE, FIRST);
     }
-    if(pin & 1 << IN_SECOND_F)
+    if(pin & 1 << IN_SECOND)
     {
         printk("Second floor called from inside\n");
         update_calls(INSIDE, SECOND);
     }
-    if(pin & 1 << IN_THIRD_F)
+    if(pin & 1 << IN_THIRD)
     {
         printk("Third floor called from inside\n");
         update_calls(INSIDE, THIRD);
     }
 }
 
-void out_down_button_callback(struct device *dev, struct gpio_callback *cb, u32_t pin)
-{   
-
-    if(pin & 1 << OUT_FIRST_DOWN)
-    {
-        printk("First floor called from outside down\n");
-        update_calls(OUT_DOWN, FIRST);
-    }
-    if(pin & 1 << OUT_SECOND_DOWN)
-    {
-        printk("Second floor called from outside down\n");
-        update_calls(OUT_DOWN, SECOND);
-    }
-    if(pin & 1 << OUT_THIRD)
-    {
-        printk("Third floor called from outside down\n");
-        update_calls(OUT_DOWN, THIRD);
-    }
-}
-
-void out_up_button_callback(struct device *dev, struct gpio_callback *cb, u32_t pin)
+void out_button_callback(struct device *dev, struct gpio_callback *cb, u32_t pin)
 {
     if(pin & 1 << OUT_GROUND)
     {
-        printk("Ground floor called from outside up\n");
-        update_calls(OUT_UP, GROUND);
+        printk("Ground floor called from outside\n");
+        update_calls(OUTSIDE, GROUND);
     }
-    if(pin & 1 << OUT_FIRST_UP)
+    if(pin & 1 << OUT_FIRST)
     {
-        printk("First floor called from outside up\n");
-        update_calls(OUT_UP, FIRST);
+        printk("First floor called from outside\n");
+        update_calls(OUTSIDE, FIRST);
     }
-    if(pin & 1 << OUT_SECOND_UP)
+    if(pin & 1 << OUT_SECOND)
     {
-        printk("Second floor called from outside up\n");
-        update_calls(OUT_UP, SECOND);
+        printk("Second floor called from outside\n");
+        update_calls(OUTSIDE, SECOND);
+    }
+    if(pin & 1 << OUT_THIRD)
+    {
+        printk("Third floor called from outside\n");
+        update_calls(OUTSIDE, THIRD);
     }
 }
 
 void read_ultrasonic(void)
 {
+    floor_t floor = GROUND;
     while(1)
     {
         int distance = get_distance(&ultrasonic);
-        floor_t floor;
-        if(distance == 5) floor = GROUND;
-        else if(distance == 25) floor = FIRST;
-        else if(distance == 45) floor = SECOND;
-        else if(distance == 65) floor = THIRD;
+        if(distance >= 4 && distance <= 6) floor = GROUND;
+        else if(distance >= 24 && distance <= 26) floor = FIRST;
+        else if(distance >= 44 && distance <= 46) floor = SECOND;
+        else if(distance >= 64 && distance <= 66) floor = THIRD;
         update_level(floor);
         //printk("Distancia atual: %d\n", distance);
     }
@@ -276,16 +257,14 @@ void initializing_elevator(void)
     new_led(&led_up, DEVICE, LED_UP);
     new_led(&led_down, DEVICE, LED_DOWN);
     new_led(&led_door, DEVICE, LED_DOOR);
-    new_button(&out_ground, DEVICE, OUT_GROUND, out_up_button_callback);
-    new_button(&out_first_up, DEVICE, OUT_FIRST_UP, out_up_button_callback);
-    new_button(&out_first_down, DEVICE, OUT_FIRST_DOWN, out_down_button_callback);
-    new_button(&out_second_up, DEVICE, OUT_SECOND_UP, out_up_button_callback);
-    new_button(&out_second_down, DEVICE, OUT_SECOND_DOWN, out_down_button_callback);
-    new_button(&out_third, DEVICE, OUT_THIRD, out_down_button_callback);
-    new_button(&in_ground, DEVICE, IN_GROUND_F, in_button_callback);
-    new_button(&in_first, DEVICE, IN_FIRST_F, in_button_callback);
-    new_button(&in_second, DEVICE, IN_SECOND_F, in_button_callback);
-    new_button(&in_third, DEVICE, IN_THIRD_F, in_button_callback);
+    new_button(&out_ground, DEVICE, OUT_GROUND, out_button_callback);
+    new_button(&out_first, DEVICE, OUT_FIRST, out_button_callback);
+    new_button(&out_second, DEVICE, OUT_SECOND, out_button_callback);
+    new_button(&out_third, DEVICE, OUT_THIRD, out_button_callback);
+    new_button(&in_ground, DEVICE, IN_GROUND, in_button_callback);
+    new_button(&in_first, DEVICE, IN_FIRST, in_button_callback);
+    new_button(&in_second, DEVICE, IN_SECOND, in_button_callback);
+    new_button(&in_third, DEVICE, IN_THIRD, in_button_callback);
 }
 
 void test(void)
