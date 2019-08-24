@@ -52,12 +52,10 @@ int get_distance(hcsr04_t *ultrasonic)
 	gpio_pin_write(ultrasonic->device, ultrasonic->pin_trigger, 1);
 	k_sleep(12);
 	gpio_pin_write(ultrasonic->device, ultrasonic->pin_trigger, 0);
-	printk("Gretchen\n");
 	do {
 		gpio_pin_read(ultrasonic->device, ultrasonic->pin_echo, &val);
-		printk("%d\n", val);
+		//printk("%d\n", val);
 	} while (val == 0);
-	printk("Tame!\n");
 	start_time = k_cycle_get_32();
 	do {
 		gpio_pin_read(ultrasonic->device, ultrasonic->pin_echo, &val);
