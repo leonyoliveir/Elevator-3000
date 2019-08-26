@@ -4,12 +4,12 @@
 #include <sys_clock.h>
 #include <shell/shell.h>
 #include "define.h"
-#include "L298N.h"
-#include "HCSR04.h"
-#include "button.h"
-#include "led.h"
-#include "calls.h"
-#include "CD4511.h"
+#include "L298N.h" // Ponte H
+#include "HCSR04.h" // Sensor Ultrassônico
+#include "button.h" // Botão
+#include "led.h" // Led
+#include "calls.h" // Chamada
+#include "CD4511.h" // Decodificador
 
 l298n_t h_bridge;
 hcsr04_t ultrasonic;
@@ -115,12 +115,14 @@ void control_outputs(state_t atual, floor_t atual_level)
     }
 }
 
+// Timeout de 5 segundos
 u8_t timeout()
 {
     k_sleep(K_SECONDS(5));
     return 1;
 }
 
+// Máquina de Estados
 void state_machine()
 {
     static floor_t atual_level;
