@@ -1,3 +1,6 @@
+/**
+Pinos
+**/
 #define DEVICE "GPIO_0"
 
 #define BRIDGE_ENABLE 2
