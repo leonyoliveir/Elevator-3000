@@ -16,9 +16,6 @@ hcsr04_t ultrasonic;
 cd4511_t decoder;
 button_t in_ground, in_first, in_second, in_third, out_ground, out_first, out_second, out_third;
 led_t led_up, led_down, led_door;
-floor_t floors;
-calls_t calls;
-state_t states;
 
 void in_button_callback(struct device *dev, struct gpio_callback *cb, u32_t pin)
 {
@@ -221,6 +218,9 @@ void initializing_elevator(void)
     new_button(&in_first, DEVICE, IN_FIRST, in_button_callback);
     new_button(&in_second, DEVICE, IN_SECOND, in_button_callback);
     new_button(&in_third, DEVICE, IN_THIRD, in_button_callback);
+    calls_t calls = INSIDE;
+    floor_t floors = GROUND;
+    update_calls(calls, floors); 
 }
 
 int cmd_test_calls(const struct shell *shell, size_t argc, char **argv)
@@ -271,7 +271,7 @@ SHELL_CMD_REGISTER(test, &sub_test, "Test comands for elevator 3000", NULL);
 // Main
 int main(void)
 {
-    initializing_elevator(); 
+    initializing_elevator();
     while(1)
     {
         state_machine();
