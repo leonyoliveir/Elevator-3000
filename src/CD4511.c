@@ -13,6 +13,7 @@ int decoder_open(cd4511_t *decoder, char *dev_label)
     decoder->digit_two = (u32_t) NULL;
     if(decoder_check_error(decoder)) return ERROR_CODE;
     printk("New decoder initialized succesfullt in the device %s\n", dev_label);
+    return 0;
 }
 
 int decoder_configure(cd4511_t *decoder, u32_t digit_one, u32_t digit_two, int flags)
@@ -27,6 +28,7 @@ int decoder_configure(cd4511_t *decoder, u32_t digit_one, u32_t digit_two, int f
     gpio_pin_write(decoder->device, digit_one, decoder->state_digit_one);
     gpio_pin_write(decoder->device, digit_two, decoder->state_digit_two);
     printk("Decoder configured succesfully at pins %d, %d\n", digit_one, digit_two);
+    return 0;
 }
 
 int decoder_set(cd4511_t *decoder, u8_t floor)
@@ -42,6 +44,7 @@ int decoder_set(cd4511_t *decoder, u8_t floor)
     gpio_pin_write(decoder->device, decoder->digit_one, decoder->state_digit_one);
     gpio_pin_write(decoder->device, decoder->digit_two, decoder->state_digit_two);
     printk("Decoder value changed to %d\n", floor);
+    return 0;
 }
 
 int decoder_check_error(cd4511_t *decoder)

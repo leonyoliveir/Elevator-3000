@@ -2,6 +2,7 @@
 #include <misc/printk.h>
 #include <misc/util.h>
 #include <sys_clock.h>
+#include <shell/shell.h>
 #include "define.h"
 #include "L298N.h"
 #include "HCSR04.h"
@@ -18,51 +19,6 @@ led_t led_up, led_down, led_door;
 floor_t floors;
 calls_t calls;
 state_t states;
-
-u8_t check_calls(floor_t destination)
-{
-    if(check_inside(destination) || check_outside(destination)) return 1;
-    return 0;
-}
-
-u8_t check_calls_up(floor_t atual)
-{
-    floor_t level;
-    for(level = atual; level <= THIRD; level++)
-    {
-        if(check_inside(level) ||  check_outside(level)) return 1;
-    }
-    return 0;
-}
-
-u8_t check_calls_down(floor_t atual)
-{
-    floor_t level;
-    for(level = GROUND; level <= atual; level++)
-    {
-        if(check_inside(level) || check_outside(level)) return 1;
-    }
-    return 0;
-}
-
-void update_calls(calls_t source, floor_t destination)
-{
-    switch (source)
-    {
-        case INSIDE:
-            update_inside(destination, 1);
-            break;
-        case OUTSIDE:
-            update_outside(destination, 1);
-            break;
-        case ARRIVE:
-            update_inside(destination, 0);
-            update_outside(destination, 0);
-            break;
-        default:
-            break;
-    }
-}
 
 void in_button_callback(struct device *dev, struct gpio_callback *cb, u32_t pin)
 {
@@ -267,20 +223,51 @@ void initializing_elevator(void)
     new_button(&in_third, DEVICE, IN_THIRD, in_button_callback);
 }
 
-void test(void)
+int cmd_test_calls(const struct shell *shell, size_t argc, char **argv)
 {
-    stop_motor(&h_bridge);
-    k_sleep(500);
-    turn_left_motor(&h_bridge);
-    k_sleep(500);
-    stop_motor(&h_bridge);
-    k_sleep(500);
-    turn_right_motor(&h_bridge);
-    k_sleep(500);
-    stop_motor(&h_bridge);
+    int floor = *(*(argv + 1));
+    shell_print(shell, "Calling elevator on floor %d...\n", floor);
+    update_inside(floor, 1);
+    shell_print(shell, "Called succesfully!\n");
+    return 0;
 }
 
-//K_THREAD_DEFINE(lungalunga, STACKSIZE, test, NULL, NULL, NULL, PRIORITY, 0, K_NO_WAIT);
+int cmd_test_leds(const struct shell *shell, size_t argc, char **argv)
+{
+    shell_print(shell, "Testing leds of elevator going up...\n");
+    led_set(&led_up, 0);
+    k_sleep(SLEEP_TIME);
+    led_set(&led_up, 1);
+    shell_print(shell, "Testing leds of elevator going down...\n");
+    led_set(&led_down, 0);
+    k_sleep(SLEEP_TIME);
+    led_set(&led_down, 1);
+    shell_print(shell, "Test ended!\n");
+    return 0;
+}
+
+int cmd_test_door(const struct shell *shell, size_t argc, char **argv)
+{
+    shell_print(shell, "Opening door and waiting for timeout...\n");
+    led_set(&led_door, 0);
+    if(timeout())
+    {
+        shell_print(shell, "Timeout reached! Closing door...\n");
+        led_set(&led_door, 1);
+    }
+    shell_print(shell, "Test door ended\n");
+    return 0;
+}
+
+SHELL_STATIC_SUBCMD_SET_CREATE(sub_test,
+    SHELL_CMD_ARG(door, NULL, "Acione animaçao SPIN.", cmd_test_door, 1, NULL),
+	SHELL_CMD_ARG(call, NULL, "Acione um Led.", cmd_test_calls, 2, NULL),
+    SHELL_CMD_ARG(led, NULL, "Acione todos os Leds.", cmd_test_leds, 1, NULL),
+	SHELL_SUBCMD_SET_END
+);
+
+SHELL_CMD_REGISTER(test, &sub_test, "Test comands for elevator 3000", NULL);
+
 // Main
 int main(void)
 {

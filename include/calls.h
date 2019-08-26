@@ -19,4 +19,12 @@ u8_t check_inside(floor_t destination);
 
 u8_t check_outside(floor_t destination);
 
+u8_t check_calls(floor_t destination);
+
+u8_t check_calls_up(floor_t atual);
+
+u8_t check_calls_down(floor_t atual);
+
+void update_calls(calls_t source, floor_t destination);
+
 #endif

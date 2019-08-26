@@ -53,3 +53,48 @@ u8_t check_outside(floor_t destination)
     k_sem_give(&elevator_out);
     return there_is_a_call;
 }
+
+u8_t check_calls(floor_t destination)
+{
+    if(check_inside(destination) || check_outside(destination)) return 1;
+    return 0;
+}
+
+u8_t check_calls_up(floor_t atual)
+{
+    floor_t level;
+    for(level = atual; level <= THIRD; level++)
+    {
+        if(check_inside(level) ||  check_outside(level)) return 1;
+    }
+    return 0;
+}
+
+u8_t check_calls_down(floor_t atual)
+{
+    floor_t level;
+    for(level = GROUND; level <= atual; level++)
+    {
+        if(check_inside(level) || check_outside(level)) return 1;
+    }
+    return 0;
+}
+
+void update_calls(calls_t source, floor_t destination)
+{
+    switch (source)
+    {
+        case INSIDE:
+            update_inside(destination, 1);
+            break;
+        case OUTSIDE:
+            update_outside(destination, 1);
+            break;
+        case ARRIVE:
+            update_inside(destination, 0);
+            update_outside(destination, 0);
+            break;
+        default:
+            break;
+    }
+}
