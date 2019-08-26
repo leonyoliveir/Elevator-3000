@@ -1,3 +1,6 @@
+/**
+Display de 7 segmentos
+**/
 #ifndef _CD4511_H_
 #define _CD4511_H_
 
