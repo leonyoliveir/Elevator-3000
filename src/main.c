@@ -262,9 +262,9 @@ int cmd_test_door(const struct shell *shell, size_t argc, char **argv)
 }
 
 SHELL_STATIC_SUBCMD_SET_CREATE(sub_test,
-    SHELL_CMD_ARG(door, NULL, "Acione animaçao SPIN.", cmd_test_door, 1, NULL),
-	SHELL_CMD_ARG(call, NULL, "Acione um Led.", cmd_test_calls, 2, NULL),
-    SHELL_CMD_ARG(led, NULL, "Acione todos os Leds.", cmd_test_leds, 1, NULL),
+    SHELL_CMD_ARG(door, NULL, "Test door", cmd_test_door, 1, NULL),
+	SHELL_CMD_ARG(call, NULL, "Call elevator to floor", cmd_test_calls, 2, NULL),
+    SHELL_CMD_ARG(led, NULL, "Test the going up and going down leds", cmd_test_leds, 1, NULL),
 	SHELL_SUBCMD_SET_END
 );
 
