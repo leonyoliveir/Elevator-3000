@@ -10,6 +10,7 @@
 #include "led.h" // Led
 #include "calls.h" // Chamada
 #include "CD4511.h" // Decodificador
+#include "bt.h"
 
 l298n_t h_bridge;
 hcsr04_t ultrasonic;
@@ -273,6 +274,13 @@ SHELL_CMD_REGISTER(test, &sub_test, "Test comands for elevator 3000", NULL);
 // Main
 int main(void)
 {
+    int err;
+    
+    if( err = bt_init(), err ){
+        // LOG_ERR("Bluetooth init error (%d)", err);
+        return 0;
+    }
+
     initializing_elevator();
     while(1)
     {
